@@ -16,6 +16,15 @@ export type ICustomer = Prisma.CustomerGetPayload<{
 		updatedAt: true;
 	};
 }>;
+export type IInvoiceWithoutCustomer = Prisma.InvoiceGetPayload<{
+	select: {
+        id: true;
+        amount: true,
+        customerId: true,
+        createdAt: true,
+        updatedAt: true,
+	};
+}>;
 
 export type IPagination<T> = {
 	data: T[];

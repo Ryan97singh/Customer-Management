@@ -20,3 +20,18 @@ export function fakeCustomerComplete() {
     updatedAt: faker.date.anytime(),
   };
 }
+export function fakeInvoice() {
+  return {
+    amount: faker.number.float(),
+    updatedAt: faker.date.anytime(),
+  };
+}
+export function fakeInvoiceComplete() {
+  return {
+    id: faker.string.uuid(),
+    amount: faker.number.float(),
+    customerId: faker.string.uuid(),
+    createdAt: new Date(),
+    updatedAt: faker.date.anytime(),
+  };
+}

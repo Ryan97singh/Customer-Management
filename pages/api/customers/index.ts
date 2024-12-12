@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import prisma from "../../lib/prisma";
-import { Meta } from "../../types/types";
+import prisma from "../../../lib/prisma";
+import { Meta } from "../../../types/types";
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
 	if (req.method === "GET") {
@@ -30,14 +30,14 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 				orderBy: { createdAt: "desc" },
 			});
 			// Get total count
-			const totalPosts = await prisma.customer.count();
+			const totalItems = await prisma.customer.count();
 
 			// Create meta information
 			const meta: Meta = {
-				total: totalPosts,
+				total: totalItems,
 				page: pageNumber,
 				limit: pageSize,
-				totalPages: Math.ceil(totalPosts / pageSize),
+				totalPages: Math.ceil(totalItems / pageSize),
 			};
 
 			// Return paginated data

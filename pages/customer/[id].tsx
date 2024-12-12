@@ -1,16 +1,8 @@
-import { GetStaticProps } from "next";
-import prisma from "../../lib/prisma";
-import { Prisma } from "@prisma/client";
-import { fakeCustomerComplete } from "../../seed/customer";
-import { useEffect, useState } from "react";
-import { ICustomer, IPagination } from "../../types/types";
-import axios from "axios";
-import LoginButton from "../../component/login-btn";
-import { signOut, useSession } from "next-auth/react";
-import { useRouter } from "next/router";
-import Card from "../../component/card";
-import Loader from '../../component/loader';
-import Link from 'next/link';
+import axios from 'axios';
+import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react';
+import { ICustomer, IInvoiceWithoutCustomer, IPagination } from '../../types/types';
+import moment from 'moment';
 
 const selectedClassName =
 	"flex items-center justify-center px-4 h-10 text-blue-600 border border-gray-300 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 ";
@@ -18,94 +10,62 @@ const selectedClassName =
 const nonSelectedClassName =
 	"flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700";
 
-export default function Dashboard() {
-	const session = useSession();
-	const router = useRouter();
 
-	//useState
-	const [customers, setCustomers] = useState<IPagination<ICustomer>>();
+const CustomerDetails = () => {
+    const router = useRouter();
+
+    const [customer, setCustomer] = useState<ICustomer>();
+
+    const [invoices, setInvoices] = useState<IPagination<IInvoiceWithoutCustomer>>();
     const [page, setPage] = useState<number>(1);
-    const [loading, setLoading] = useState<boolean>(false);
 
-	//function to get customer data
-	const getCustomer = async (pageNumber: number) => {
+    const getCustomerDetails = async () => {
         try {
-            setLoading(true);
-			const res = await axios.get<IPagination<ICustomer>>(
-				"/api/customers",
-				{
-					params: {
-						limit: 10,
-						page: pageNumber,
-					},
-				}
-			);
-			if (res.status === 200) {
-				setCustomers(res.data);
-			}
-		} catch (error) {
-			console.error(error);
-        } finally {
-            setLoading(false)
+            const res = await axios.get<ICustomer>(`/api/customers/${router.query.id}`);
+            if (res.status === 200) {
+                setCustomer(res.data);
+            }
+        } catch (error) {
+            console.error(error);
         }
-	};
+    }
+    const getInvoices = async () => {
+        try {
+            const res = await axios.get<IPagination<IInvoiceWithoutCustomer>>(`/api/customers/invoices`, {
+                params: {
+                    customerId: router.query.id
+                }
+            });
+            if (res.status === 200) {
+                setInvoices(res.data);
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    }
 
-	//UseEffects
-	useEffect(() => {
-		getCustomer(page);
-	}, [page]);
 
-	useEffect(() => {
-		if (!session?.data) {
-			router.replace("/");
-		}
-		console.log({ session });
-	}, []);
 
-	if (!session?.data) {
-		return null;
-	}
+    useEffect(() => {
+        if (router.query.id) {
+            getCustomerDetails();
+            getInvoices();
+        }
+    }, [router])
 
-	return (
-		<div className='flex flex-col'>
-			<div className='-m-1.5 overflow-x-auto'>
-				<div className='p-1.5 min-w-full inline-block align-middle'>
-                    <div className='overflow-hidden'>
-                        
-                            {
-                                loading && (
-                                <div className='flex items-center justify-center absolute h-full w-full bg-[rgba(255,255,255,0.7)]'>
-                                <Loader />
-                        </div>
-                            )
-                        }
-						<div className='flex justify-end m-2'>
-							<button
-								style={{
-									border: "1px solid blue",
-									borderRadius: "5px",
-									padding: "5px 10px",
-								}}
-								onClickCapture={() => {
-									signOut();
-								}}
-							>
-								Logout
-							</button>
-						</div>
-						<div className='px-10 flex gap-10'>
-							<Card
-								name='Total Customers'
-								value={customers?.meta?.total}
-							/>
-							<Card
-								name='Total Invoices'
-								value={'5000'}
-							/>
-                        </div>
-						<table className='min-w-full divide-y divide-gray-200 mt-5'>
+    return (
+        <div className='flex flex-col items-center'>
+            {
+                customer && (
+                    <>
+                    
+                    <h2>{customer?.name}</h2>
+            <span>{customer?.email}</span></>
+                )
+            }
+            <table className='min-w-full divide-y divide-gray-200 mt-5'>
 							<caption className='caption-top mb-5'>
-								Customers
+								Invoices
 							</caption>
 							<thead>
 								<tr>
@@ -119,27 +79,52 @@ export default function Dashboard() {
 										scope='col'
 										className='px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase'
 									>
-										Name
+										Amount
 									</th>
 									<th
 										scope='col'
 										className='px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase'
 									>
-										Email Id
+										Created At
+									</th>
+									<th
+										scope='col'
+										className='px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase'
+									>
+										Updated At
+									</th>
+									<th
+										scope='col'
+										className='px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase'
+									>
+										Actions
 									</th>
 								</tr>
 							</thead>
 							<tbody className='divide-y divide-gray-200'>
-								{customers?.data?.map((c, i) => (
+								{invoices?.data?.map((c, i) => (
 									<tr key={c.id}>
 										<td className='px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800'>
 											{(page - 1) * 10 + (i + 1)}
 										</td>
 										<td className='px-6 py-4 whitespace-nowrap text-sm text-gray-800'>
-											<Link href={`/customer/${c.id}`} target='_blank'>{c.name}</Link>
+											{c.amount}
 										</td>
 										<td className='px-6 py-4 whitespace-nowrap text-sm text-gray-800'>
-											{c.email}
+											{moment(c.createdAt).format('Do MMM YYYY')}
+										</td>
+										<td className='px-6 py-4 whitespace-nowrap text-sm text-gray-800'>
+											{moment(c.updatedAt).format('Do MMM YYYY')}
+										</td>
+										<td className='px-6 py-4 whitespace-nowrap text-sm text-gray-800 flex gap-10'>
+                                            <button onClickCapture={() => {
+                                                alert(`Edit ${c.id}`)
+                                            }}>Edit</button>
+											<button onClickCapture={() => {
+                                               if(confirm("Are you sure you want to delete this invoice?")) {
+                                                alert(`Delete ${c.id}`)
+                                               }
+                                            }}>Delete</button>
 										</td>
 									</tr>
 								))}
@@ -162,7 +147,7 @@ export default function Dashboard() {
 											Previous
 										</a>
 									</li>
-									{[...Array(Math.min(10, customers?.meta?.totalPages)).keys()].map((i) => (
+									{[...Array(Math.min(10, invoices?.meta?.totalPages)).keys()].map((i) => (
 										<li key={i}>
 											<a
 												href='#'
@@ -181,7 +166,7 @@ export default function Dashboard() {
 										</li>
 									))}
 
-									{customers?.meta?.totalPages - 10 > 2 && (
+									{invoices?.meta?.totalPages - 10 > 2 && (
 										<li>
 											<a
 												href='#'
@@ -195,13 +180,13 @@ export default function Dashboard() {
 										</li>
 									)}
 
-                                    {
-                                        customers?.meta?.totalPages > 10 && (
-                                            <li>
+                        {
+                            invoices?.meta?.totalPages > 10 && (
+                                <li>
 										<a
 											href='#'
 											className={
-												customers?.meta.totalPages ===
+												invoices?.meta.totalPages ===
 												page
 													? selectedClassName
 													: nonSelectedClassName
@@ -209,14 +194,14 @@ export default function Dashboard() {
 											onClickCapture={(e) => {
 												e.preventDefault();
 												setPage(
-													customers?.meta?.totalPages
+													invoices?.meta?.totalPages
 												);
 											}}
 										>
-											{customers?.meta?.totalPages}
+											{invoices?.meta?.totalPages}
 										</a>
 									</li>
-                                        )
+                            )
                                     }
 
 									<li>
@@ -227,7 +212,7 @@ export default function Dashboard() {
 												e.preventDefault();
 												if (
 													page <
-													customers?.meta?.totalPages
+													invoices?.meta?.totalPages
 												) {
 													setPage((p) => p + 1);
 												}
@@ -239,9 +224,8 @@ export default function Dashboard() {
 								</ul>
 							</nav>
 						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	);
-}
+        </div>
+    )
+};
+
+export default CustomerDetails;

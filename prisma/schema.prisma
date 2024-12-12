@@ -24,4 +24,16 @@ model Customer {
   createdAt     DateTime  @default(now()) @map(name: "created_at")
   updatedAt     DateTime  @updatedAt @map(name: "updated_at")
   @@map(name: "customers")
+  Invoice Invoice[]
+}
+
+// Create invoice schema and link it with customer
+model Invoice {
+  id            String       @default(cuid()) @id
+  amount        Float
+  customer      Customer     @relation(fields: [customerId], references: [id])
+  customerId    String
+  createdAt     DateTime  @default(now()) @map(name: "created_at")
+  updatedAt     DateTime  @updatedAt @map(name: "updated_at")
+  @@map(name: "invoices")
 }
