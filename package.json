@@ -26,6 +26,8 @@
 		"@types/react": "19.0.1",
 		"autoprefixer": "^10.4.20",
 		"postcss": "^8.4.49",
+		"prettier": "^2.8.8",
+		"prettier-plugin-tailwind": "^2.2.12",
 		"prisma": "^6.0.1",
 		"prisma-generator-fake-data": "^0.14.3",
 		"sass": "^1.82.0",

@@ -8,12 +8,13 @@ import axios from "axios";
 import LoginButton from "../../component/login-btn";
 import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/router";
+import Card from "../../component/card";
 
 const selectedClassName =
-	"flex items-center justify-center px-4 h-10 text-blue-600 border border-gray-300 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 dark:border-gray-700 dark:bg-gray-700 dark:text-white";
+	"flex items-center justify-center px-4 h-10 text-blue-600 border border-gray-300 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 ";
 
 const nonSelectedClassName =
-	"flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white";
+	"flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700";
 
 export default function Dashboard() {
 	const session = useSession();
@@ -78,9 +79,19 @@ export default function Dashboard() {
 								Logout
 							</button>
 						</div>
+						<div className='px-10 flex gap-10'>
+							<Card
+								name='Total Customers'
+								value={customers?.meta?.total}
+							/>
+							<Card
+								name='Total Invoices'
+								value={'5000'}
+							/>
+						</div>
 						<table className='min-w-full divide-y divide-gray-200'>
-							<caption className='caption-top mb-4'>
-								Dashboard
+							<caption className='caption-top mb-5'>
+								Customers
 							</caption>
 							<thead>
 								<tr>
@@ -120,7 +131,7 @@ export default function Dashboard() {
 								))}
 							</tbody>
 						</table>
-						<div className='flex items-center justify-center'>
+						<div className='flex items-center justify-center mt-10'>
 							<nav aria-label='Page navigation example'>
 								<ul className='inline-flex -space-x-px text-base h-10'>
 									<li>
@@ -132,7 +143,7 @@ export default function Dashboard() {
 													setPage((p) => p - 1);
 												}
 											}}
-											className='flex items-center justify-center px-4 h-10 ms-0 leading-tight text-gray-500 bg-white border border-e-0 border-gray-300 rounded-s-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white'
+											className='flex items-center justify-center px-4 h-10 ms-0 leading-tight text-gray-500 bg-white border border-e-0 border-gray-300 rounded-s-lg hover:bg-gray-100 hover:text-gray-700'
 										>
 											Previous
 										</a>
@@ -160,7 +171,7 @@ export default function Dashboard() {
 										<li>
 											<a
 												href='#'
-												className='flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300 rounded-e-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white'
+												className='flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300 rounded-e-lg hover:bg-gray-100 hover:text-gray-700'
 												onClickCapture={(e) => {
 													e.preventDefault();
 												}}
@@ -193,7 +204,7 @@ export default function Dashboard() {
 									<li>
 										<a
 											href='#'
-											className='flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300 rounded-e-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white'
+											className='flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300 rounded-e-lg hover:bg-gray-100 hover:text-gray-700'
 											onClickCapture={(e) => {
 												e.preventDefault();
 												if (
