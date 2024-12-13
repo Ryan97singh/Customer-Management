@@ -44,7 +44,8 @@ model AuditLog {
   id          String    @default(cuid()) @id
   tableName   String
   operation   String    // e.g., CREATE, UPDATE, DELETE
-  recordId    String    // ID of the affected record
+  invoiceId    String    // ID of the affected invoice
+  customerId    String    // ID of the affected customer
   changes     Json?     // Stores the changed fields and their new values
   timestamp   DateTime  @default(now())
   userId      String?   // Optional: Track the user making the change

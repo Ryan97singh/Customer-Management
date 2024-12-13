@@ -27,6 +27,18 @@ export type IInvoiceWithoutCustomer = Prisma.InvoiceGetPayload<{
 		status: true;
 	};
 }>;
+export type IAuditLog = Prisma.AuditLogGetPayload<{
+	select: {
+		id: true;
+		tableName: true;
+		operation: true;
+		invoiceId: true;
+		customerId: true;
+		changes: true;
+		userId: true;
+		timestamp: true;
+	};
+}>;
 
 export type IPagination<T> = {
 	data: T[];

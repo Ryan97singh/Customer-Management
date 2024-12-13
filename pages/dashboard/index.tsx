@@ -21,6 +21,8 @@ const nonSelectedClassName =
 
 export default function Dashboard() {
 	const session = useSession();
+	console.log(session);
+
 	const router = useRouter();
 
 	//useState

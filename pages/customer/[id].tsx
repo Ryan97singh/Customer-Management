@@ -2,6 +2,7 @@ import axios from "axios";
 import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";
 import {
+	IAuditLog,
 	ICustomer,
 	IInvoiceWithoutCustomer,
 	IPagination,
@@ -20,6 +21,7 @@ import {
 } from "flowbite-react";
 import Loader from "../../component/loader";
 import { toast } from "react-toastify";
+import { useSession } from "next-auth/react";
 
 export async function getStaticProps({ params }) {
 	return { props: {} };
@@ -48,8 +50,10 @@ const CustomerDetails = () => {
 	const [page, setPage] = useState<number>(1);
 	const [editVisible, setEditVisible] = useState<boolean>(false);
 	const [addVisible, setAddVisible] = useState<boolean>(false);
+	const [auditVisible, setAuditVisible] = useState<boolean>(false);
 	const [requests, setRequests] = useState<number>(0);
 	const [edit, setEdit] = useState<IInvoiceWithoutCustomer | null>(null);
+	const [auditLogs, setAuditLogs] = useState<IAuditLog[]>([]);
 
 	const formRef = useRef<HTMLFormElement>(null);
 	const addFormRef = useRef<HTMLFormElement>(null);
@@ -90,12 +94,35 @@ const CustomerDetails = () => {
 		}
 	};
 
+	const getAuditLogs = async () => {
+		try {
+			setRequests((r) => r + 1);
+			const res = await axios.get<IAuditLog[]>(
+				`/api/customers/invoices/audit-log`,
+				{
+					params: {
+						customerId: router.query.id,
+					},
+				}
+			);
+			if (res.status === 200) {
+				setAuditLogs(res.data);
+				setAuditVisible(true);
+			}
+		} catch (error) {
+			console.error(error);
+		} finally {
+			setRequests((r) => r - 1);
+		}
+	};
+
 	const deleteInvoice = async (id: string) => {
 		try {
 			setRequests((r) => r + 1);
 			const res = await axios.delete(`/api/customers/invoices`, {
 				params: {
 					id,
+					customerId: router.query.id,
 				},
 			});
 			if (res.status === 200) {
@@ -119,6 +146,7 @@ const CustomerDetails = () => {
 			const res = await axios.put(`/api/customers/invoices`, data, {
 				params: {
 					id: data.id,
+					customerId: router.query.id,
 				},
 			});
 			if (res.status === 200) {
@@ -196,15 +224,26 @@ const CustomerDetails = () => {
 				</div>
 			)}
 			<div className='overflow-scroll'>
-				<div className='flex justify-end mx-2'>
-					<button
-						onClickCapture={() => setAddVisible(true)}
-						type='button'
-						className='flex gap-2 items-center justify-center text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800'
-					>
-						<AddIcon />
-						Add Invoice
-					</button>
+				<div className='flex gap-2 justify-end'>
+					<div className='flex justify-end mx-2'>
+						<button
+							onClickCapture={() => setAddVisible(true)}
+							type='button'
+							className='flex gap-2 items-center justify-center text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800'
+						>
+							<AddIcon />
+							Add Invoice
+						</button>
+					</div>
+					<div className='flex justify-end mx-2'>
+						<button
+							onClickCapture={() => getAuditLogs()}
+							type='button'
+							className='flex gap-2 items-center justify-center text-white bg-green-600 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800'
+						>
+							Audit Logs
+						</button>
+					</div>
 				</div>
 				<table className='min-w-full divide-y divide-gray-200 mt-5'>
 					<caption className='caption-top mb-5'>Invoices</caption>
@@ -530,6 +569,97 @@ const CustomerDetails = () => {
 						</button>
 					</div>
 				</ModalFooter>
+			</Modal>
+			{/* Audit Logs Modal*/}
+			<Modal show={auditVisible} onClose={() => setAuditVisible(false)}>
+				<ModalHeader>
+					<div className='flex items-center justify-between w-100'>
+						<h3 className='text-xl font-semibold text-gray-900 dark:text-white'>
+							Audit Logs
+						</h3>
+					</div>
+				</ModalHeader>
+				<ModalBody className='min-h-52'>
+					<div className='overflow-scroll'>
+						<table className='min-w-full divide-y divide-gray-200 mt-5'>
+							<caption className='caption-top mb-5'>
+								Invoices
+							</caption>
+							<thead>
+								<tr>
+									<th
+										scope='col'
+										className='px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase'
+									>
+										Sr. No.
+									</th>
+									<th
+										scope='col'
+										className='px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase'
+									>
+										Operation
+									</th>
+									<th
+										scope='col'
+										className='px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase'
+									>
+										Invoice ID
+									</th>
+									<th
+										scope='col'
+										className='px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase'
+									>
+										Changes
+									</th>
+									<th
+										scope='col'
+										className='px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase'
+									>
+										Date
+									</th>
+									<th
+										scope='col'
+										className='px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase'
+									>
+										Updated By
+									</th>
+								</tr>
+							</thead>
+							<tbody className='divide-y divide-gray-200'>
+								{auditLogs?.map((c, i) => (
+									<tr key={c.id}>
+										<td className='px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800'>
+											{i + 1}
+										</td>
+										<td className='px-6 py-4 whitespace-nowrap text-sm text-gray-800'>
+											{c.operation}
+										</td>
+										<td className='px-6 py-4 whitespace-nowrap text-sm text-gray-800'>
+											{c.invoiceId}
+										</td>
+										<td className='px-6 py-4 whitespace-nowrap text-sm text-gray-800'>
+											<pre>
+												{JSON.stringify(
+													c.changes,
+													null,
+													4
+												)}
+											</pre>
+										</td>
+										<td className='px-6 py-4 whitespace-nowrap text-sm text-gray-800'>
+											{moment(c.timestamp).format(
+												"Do MMM YYYY"
+											)}
+										</td>
+										<td className='px-6 py-4 whitespace-nowrap text-sm text-gray-800'>
+											{c.userId}
+										</td>
+									</tr>
+								))}
+							</tbody>
+						</table>
+					</div>
+				</ModalBody>
 			</Modal>
 		</div>
 	);

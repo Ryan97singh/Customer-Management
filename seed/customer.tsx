@@ -45,7 +45,8 @@ export function fakeAuditLog() {
 	return {
 		tableName: faker.lorem.words(5),
 		operation: faker.lorem.words(5),
-		recordId: faker.lorem.words(5),
+		invoiceId: faker.lorem.words(5),
+		customerId: faker.lorem.words(5),
 		changes: undefined,
 		userId: undefined,
 	};
@@ -55,7 +56,8 @@ export function fakeAuditLogComplete() {
 		id: faker.string.uuid(),
 		tableName: faker.lorem.words(5),
 		operation: faker.lorem.words(5),
-		recordId: faker.lorem.words(5),
+		invoiceId: faker.lorem.words(5),
+		customerId: faker.lorem.words(5),
 		changes: undefined,
 		timestamp: new Date(),
 		userId: undefined,

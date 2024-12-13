@@ -1,11 +1,18 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import prisma from "../../../../lib/prisma";
 import { IInvoiceWithoutCustomer, Meta } from "../../../../types/types";
+import { decode } from "next-auth/jwt";
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
+	const token = req.cookies["next-auth.session-token"];
+	const decoded = await decode({
+		token: token,
+		secret: process.env.JWT_SECRET,
+	});
+	const userId = decoded?.email;
+
 	if (req.method === "GET") {
 		const { page = "1", limit = "10", customerId } = req.query;
-		console.log({ customerId });
 
 		//parse the parameters
 		const pageNumber = parseInt(page as string, 10);
@@ -55,10 +62,21 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 			res.status(500).json({ error: "Internal server error" });
 		}
 	} else if (req.method === "DELETE") {
-		const { id } = req.query;
+		const { id, customerId } = req.query;
 		try {
-			await prisma.invoice.delete({
+			const deletedInvoice = await prisma.invoice.delete({
 				where: { id: id as string },
+			});
+			await prisma.auditLog.create({
+				data: {
+					tableName: "Invoice",
+					operation: "DELETE",
+					invoiceId: id as string,
+					customerId: customerId as string,
+					changes: deletedInvoice,
+					timestamp: new Date(),
+					userId,
+				},
 			});
 			res.status(200).json({ message: "Invoice deleted successfully" });
 		} catch (error) {
@@ -66,7 +84,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 			res.status(500).json({ error: "Internal server error" });
 		}
 	} else if (req.method === "PUT") {
-		const { id } = req.query;
+		const { id, customerId } = req.query;
 		const { amount, dueDate, status } = req.body as IInvoiceWithoutCustomer;
 		try {
 			await prisma.invoice.update({
@@ -75,6 +93,21 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 					status,
 					amount,
 					dueDate,
+				},
+			});
+			await prisma.auditLog.create({
+				data: {
+					tableName: "Invoice",
+					operation: "UPDATE",
+					invoiceId: id as string,
+					customerId: customerId as string,
+					changes: {
+						status,
+						amount,
+						dueDate,
+					},
+					timestamp: new Date(),
+					userId,
 				},
 			});
 			res.status(200).json({ message: "Invoice updated successfully" });
@@ -86,12 +119,28 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 		const { customerId } = req.query;
 		const { amount, dueDate, status } = req.body as IInvoiceWithoutCustomer;
 		try {
-			await prisma.invoice.create({
+			const invoice = await prisma.invoice.create({
 				data: {
 					customerId: customerId as string,
 					status,
 					amount,
 					dueDate,
+				},
+			});
+			await prisma.auditLog.create({
+				data: {
+					tableName: "Invoice",
+					operation: "CREATE",
+					invoiceId: invoice.id,
+					customerId: customerId as string,
+					changes: {
+						customerId: customerId as string,
+						status,
+						amount,
+						dueDate,
+					},
+					timestamp: new Date(),
+					userId,
 				},
 			});
 			res.status(200).json({ message: "Invoice added successfully" });
