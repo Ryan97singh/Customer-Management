@@ -23,6 +23,8 @@ export type IInvoiceWithoutCustomer = Prisma.InvoiceGetPayload<{
 		customerId: true;
 		createdAt: true;
 		updatedAt: true;
+		dueDate: true;
+		status: true;
 	};
 }>;
 

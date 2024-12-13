@@ -26,14 +26,15 @@ export default function Dashboard() {
 	//useState
 	const [customers, setCustomers] = useState<IPagination<ICustomer>>();
 	const [invoiceCount, setInvoiceCount] = useState<number>();
-	const [invoicebyMonth, setInvoiceByMonth] = useState<InvoiceByMonth[]>([]);
+	const [invoiceByMonth, setInvoiceByMonth] = useState<InvoiceByMonth[]>([]);
 	const [page, setPage] = useState<number>(1);
-	const [loading, setLoading] = useState<boolean>(false);
+
+	const [requests, setRequests] = useState<number>(0);
 
 	//function to get customer data
 	const getCustomer = async (pageNumber: number) => {
 		try {
-			setLoading(true);
+			setRequests((r) => r + 1);
 			const res = await axios.get<IPagination<ICustomer>>(
 				"/api/customers",
 				{
@@ -48,11 +49,14 @@ export default function Dashboard() {
 			}
 		} catch (error) {
 			console.error(error);
+		} finally {
+			setRequests((r) => r - 1);
 		}
 	};
 
 	const getInvoicesCount = async () => {
 		try {
+			setRequests((r) => r + 1);
 			const res = await axios.get<number>(
 				"/api/customers/invoices/count"
 			);
@@ -61,10 +65,13 @@ export default function Dashboard() {
 			}
 		} catch (error) {
 			console.error(error);
+		} finally {
+			setRequests((r) => r - 1);
 		}
 	};
 	const getInvoiceByMonth = async () => {
 		try {
+			setRequests((r) => r + 1);
 			const res = await axios.get<InvoiceByMonth[]>(
 				"/api/customers/invoices/invoice-by-month"
 			);
@@ -74,7 +81,7 @@ export default function Dashboard() {
 		} catch (error) {
 			console.error(error);
 		} finally {
-			setLoading(false);
+			setRequests((r) => r - 1);
 		}
 	};
 
@@ -101,14 +108,14 @@ export default function Dashboard() {
 
 	return (
 		<div className='flex flex-col'>
+			{requests !== 0 && (
+				<div className='flex items-center justify-center fixed h-full w-full bg-[rgba(255,255,255,0.7)]'>
+					<Loader />
+				</div>
+			)}
 			<div className='-m-1.5 overflow-x-auto'>
 				<div className='p-1.5 min-w-full inline-block align-middle'>
 					<div className='overflow-hidden'>
-						{loading && (
-							<div className='flex items-center justify-center absolute h-full w-full bg-[rgba(255,255,255,0.7)]'>
-								<Loader />
-							</div>
-						)}
 						<div className='flex justify-end m-2'>
 							<button
 								style={{
@@ -131,10 +138,10 @@ export default function Dashboard() {
 							<Card name='Total Invoices' value={invoiceCount} />
 						</div>
 						<div className='px-10 flex gap-10 items-center justify-center mt-10'>
-							{invoicebyMonth.length > 0 && (
+							{invoiceByMonth.length > 0 && (
 								<BarChart
-									data={invoicebyMonth.map((i) => i.amount)}
-									labels={invoicebyMonth.map((i) => i.month)}
+									data={invoiceByMonth.map((i) => i.amount)}
+									labels={invoiceByMonth.map((i) => i.month)}
 								/>
 							)}
 						</div>

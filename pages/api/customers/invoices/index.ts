@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import prisma from "../../../../lib/prisma";
-import { Meta } from "../../../../types/types";
+import { IInvoiceWithoutCustomer, Meta } from "../../../../types/types";
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
 	if (req.method === "GET") {
@@ -50,6 +50,51 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
 			// Return paginated data
 			res.status(200).json({ data: invoices, meta });
+		} catch (error) {
+			console.error(error);
+			res.status(500).json({ error: "Internal server error" });
+		}
+	} else if (req.method === "DELETE") {
+		const { id } = req.query;
+		try {
+			await prisma.invoice.delete({
+				where: { id: id as string },
+			});
+			res.status(200).json({ message: "Invoice deleted successfully" });
+		} catch (error) {
+			console.error(error);
+			res.status(500).json({ error: "Internal server error" });
+		}
+	} else if (req.method === "PUT") {
+		const { id } = req.query;
+		const { amount, dueDate, status } = req.body as IInvoiceWithoutCustomer;
+		try {
+			await prisma.invoice.update({
+				where: { id: id as string },
+				data: {
+					status,
+					amount,
+					dueDate,
+				},
+			});
+			res.status(200).json({ message: "Invoice updated successfully" });
+		} catch (error) {
+			console.error(error);
+			res.status(500).json({ error: "Internal server error" });
+		}
+	} else if (req.method === "POST") {
+		const { customerId } = req.query;
+		const { amount, dueDate, status } = req.body as IInvoiceWithoutCustomer;
+		try {
+			await prisma.invoice.create({
+				data: {
+					customerId: customerId as string,
+					status,
+					amount,
+					dueDate,
+				},
+			});
+			res.status(200).json({ message: "Invoice added successfully" });
 		} catch (error) {
 			console.error(error);
 			res.status(500).json({ error: "Internal server error" });
