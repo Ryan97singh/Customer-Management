@@ -3,16 +3,18 @@ import { fakeCustomerComplete, fakeInvoiceComplete } from "../seed/customer";
 const prisma = new PrismaClient();
 
 const seedInvoices = async () => {
-    await prisma.invoice.deleteMany();
-    const customers = await prisma.customer.findMany();
-    customers.forEach(async customer => {
-        for (let i = 0; i < 10; i++) {
-            const invoice = fakeInvoiceComplete(customer.id);
-            await prisma.invoice.create({
-                data: invoice,
-            });
-        }
-    })
+	await prisma.invoice.deleteMany();
+	const customers = await prisma.customer.findMany();
+	// customers.forEach(async customer => {
+	for (const customer of customers) {
+		for (let i = 0; i < 10; i++) {
+			const invoice = fakeInvoiceComplete(customer.id);
+			await prisma.invoice.create({
+				data: invoice,
+			});
+		}
+	}
+	// )
 };
 
 seedInvoices()
