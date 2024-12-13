@@ -4,10 +4,6 @@ generator client {
   provider = "prisma-client-js"
 }
 
-generator custom_generator {
-    provider = "prisma-generator-fake-data"
-    output   = "../seed/customer.tsx"
-}
 
 datasource db {
   provider = "postgresql"
