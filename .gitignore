@@ -39,3 +39,7 @@ yarn.lock
 .env
 .vercel
 .env*.local
+
+#seed files
+prisma/seedCustomer.ts
+prisma/seedInvoices.ts
