@@ -3,14 +3,16 @@ import prisma from "../../lib/prisma";
 import { Prisma } from "@prisma/client";
 import { fakeCustomerComplete } from "../../seed/customer";
 import { useEffect, useState } from "react";
-import { ICustomer, IPagination } from "../../types/types";
+import { ICustomer, InvoiceByMonth, IPagination } from "../../types/types";
 import axios from "axios";
 import LoginButton from "../../component/login-btn";
 import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import Card from "../../component/card";
-import Loader from '../../component/loader';
-import Link from 'next/link';
+import Loader from "../../component/loader";
+import Link from "next/link";
+import BarChart from "../../component/barChart";
+import InvoiceByMonth from "../../types/types";
 
 const selectedClassName =
 	"flex items-center justify-center px-4 h-10 text-blue-600 border border-gray-300 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 ";
@@ -24,13 +26,15 @@ export default function Dashboard() {
 
 	//useState
 	const [customers, setCustomers] = useState<IPagination<ICustomer>>();
-    const [page, setPage] = useState<number>(1);
-    const [loading, setLoading] = useState<boolean>(false);
+	const [invoiceCount, setInvoiceCount] = useState<number>();
+	const [invoicebyMonth, setInvoiceByMonth] = useState<InvoiceByMonth[]>([]);
+	const [page, setPage] = useState<number>(1);
+	const [loading, setLoading] = useState<boolean>(false);
 
 	//function to get customer data
 	const getCustomer = async (pageNumber: number) => {
-        try {
-            setLoading(true);
+		try {
+			setLoading(true);
 			const res = await axios.get<IPagination<ICustomer>>(
 				"/api/customers",
 				{
@@ -45,15 +49,45 @@ export default function Dashboard() {
 			}
 		} catch (error) {
 			console.error(error);
-        } finally {
-            setLoading(false)
-        }
+		}
+	};
+
+	const getInvoicesCount = async () => {
+		try {
+			const res = await axios.get<number>(
+				"/api/customers/invoices/count"
+			);
+			if (res.status === 200) {
+				setInvoiceCount(res.data);
+			}
+		} catch (error) {
+			console.error(error);
+		}
+	};
+	const getInvoiceByMonth = async () => {
+		try {
+			const res = await axios.get<InvoiceByMonth[]>(
+				"/api/customers/invoices/invoice-by-month"
+			);
+			if (res.status === 200) {
+				setInvoiceByMonth(res.data);
+			}
+		} catch (error) {
+			console.error(error);
+		} finally {
+			setLoading(false);
+		}
 	};
 
 	//UseEffects
 	useEffect(() => {
 		getCustomer(page);
 	}, [page]);
+
+	useEffect(() => {
+		getInvoicesCount();
+		getInvoiceByMonth();
+	}, []);
 
 	useEffect(() => {
 		if (!session?.data) {
@@ -70,15 +104,12 @@ export default function Dashboard() {
 		<div className='flex flex-col'>
 			<div className='-m-1.5 overflow-x-auto'>
 				<div className='p-1.5 min-w-full inline-block align-middle'>
-                    <div className='overflow-hidden'>
-                        
-                            {
-                                loading && (
-                                <div className='flex items-center justify-center absolute h-full w-full bg-[rgba(255,255,255,0.7)]'>
-                                <Loader />
-                        </div>
-                            )
-                        }
+					<div className='overflow-hidden'>
+						{loading && (
+							<div className='flex items-center justify-center absolute h-full w-full bg-[rgba(255,255,255,0.7)]'>
+								<Loader />
+							</div>
+						)}
 						<div className='flex justify-end m-2'>
 							<button
 								style={{
@@ -93,16 +124,21 @@ export default function Dashboard() {
 								Logout
 							</button>
 						</div>
-						<div className='px-10 flex gap-10'>
+						<div className='px-10 flex gap-10 items-center justify-center'>
 							<Card
 								name='Total Customers'
 								value={customers?.meta?.total}
 							/>
-							<Card
-								name='Total Invoices'
-								value={'5000'}
-							/>
-                        </div>
+							<Card name='Total Invoices' value={invoiceCount} />
+						</div>
+						<div className='px-10 flex gap-10 items-center justify-center mt-10'>
+							{invoicebyMonth.length > 0 && (
+								<BarChart
+									data={invoicebyMonth.map((i) => i.amount)}
+									labels={invoicebyMonth.map((i) => i.month)}
+								/>
+							)}
+						</div>
 						<table className='min-w-full divide-y divide-gray-200 mt-5'>
 							<caption className='caption-top mb-5'>
 								Customers
@@ -136,7 +172,12 @@ export default function Dashboard() {
 											{(page - 1) * 10 + (i + 1)}
 										</td>
 										<td className='px-6 py-4 whitespace-nowrap text-sm text-gray-800'>
-											<Link href={`/customer/${c.id}`} target='_blank'>{c.name}</Link>
+											<Link
+												href={`/customer/${c.id}`}
+												target='_blank'
+											>
+												{c.name}
+											</Link>
 										</td>
 										<td className='px-6 py-4 whitespace-nowrap text-sm text-gray-800'>
 											{c.email}
@@ -162,24 +203,32 @@ export default function Dashboard() {
 											Previous
 										</a>
 									</li>
-									{[...Array(Math.min(10, customers?.meta?.totalPages)).keys()].map((i) => (
-										<li key={i}>
-											<a
-												href='#'
-												className={
-													i + 1 === page
-														? selectedClassName
-														: nonSelectedClassName
-												}
-												onClickCapture={(e) => {
-													e.preventDefault();
-													setPage(i + 1);
-												}}
-											>
-												{i + 1}
-											</a>
-										</li>
-									))}
+									{customers?.meta?.totalPages &&
+										[
+											...Array(
+												Math.min(
+													10,
+													customers?.meta?.totalPages
+												)
+											).keys(),
+										].map((i) => (
+											<li key={i}>
+												<a
+													href='#'
+													className={
+														i + 1 === page
+															? selectedClassName
+															: nonSelectedClassName
+													}
+													onClickCapture={(e) => {
+														e.preventDefault();
+														setPage(i + 1);
+													}}
+												>
+													{i + 1}
+												</a>
+											</li>
+										))}
 
 									{customers?.meta?.totalPages - 10 > 2 && (
 										<li>
@@ -195,29 +244,28 @@ export default function Dashboard() {
 										</li>
 									)}
 
-                                    {
-                                        customers?.meta?.totalPages > 10 && (
-                                            <li>
-										<a
-											href='#'
-											className={
-												customers?.meta.totalPages ===
-												page
-													? selectedClassName
-													: nonSelectedClassName
-											}
-											onClickCapture={(e) => {
-												e.preventDefault();
-												setPage(
-													customers?.meta?.totalPages
-												);
-											}}
-										>
-											{customers?.meta?.totalPages}
-										</a>
-									</li>
-                                        )
-                                    }
+									{customers?.meta?.totalPages > 10 && (
+										<li>
+											<a
+												href='#'
+												className={
+													customers?.meta
+														.totalPages === page
+														? selectedClassName
+														: nonSelectedClassName
+												}
+												onClickCapture={(e) => {
+													e.preventDefault();
+													setPage(
+														customers?.meta
+															?.totalPages
+													);
+												}}
+											>
+												{customers?.meta?.totalPages}
+											</a>
+										</li>
+									)}
 
 									<li>
 										<a

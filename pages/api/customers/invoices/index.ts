@@ -1,11 +1,11 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import prisma from '../../../lib/prisma';
-import { Meta } from '../../../types/types';
+import prisma from "../../../../lib/prisma";
+import { Meta } from "../../../../types/types";
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
 	if (req.method === "GET") {
-        const { page = "1", limit = "10", customerId } = req.query;
-        console.log({customerId});
+		const { page = "1", limit = "10", customerId } = req.query;
+		console.log({ customerId });
 
 		//parse the parameters
 		const pageNumber = parseInt(page as string, 10);
@@ -28,17 +28,17 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 			const invoices = await prisma.invoice.findMany({
 				skip: (pageNumber - 1) * pageSize,
 				take: pageSize,
-                orderBy: { createdAt: "desc" },
-                where: {
-                    customerId: customerId as string
-                }
+				orderBy: { createdAt: "desc" },
+				where: {
+					customerId: customerId as string,
+				},
 			});
 			// Get total count
-            const totalItems = await prisma.invoice.count({
-                where: {
-                    customerId: customerId as string
-                }
-            });
+			const totalItems = await prisma.invoice.count({
+				where: {
+					customerId: customerId as string,
+				},
+			});
 
 			// Create meta information
 			const meta: Meta = {

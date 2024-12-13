@@ -177,28 +177,29 @@ const CustomerDetails = () => {
 								Previous
 							</a>
 						</li>
-						{[
-							...Array(
-								Math.min(10, invoices?.meta?.totalPages)
-							).keys(),
-						].map((i) => (
-							<li key={i}>
-								<a
-									href='#'
-									className={
-										i + 1 === page
-											? selectedClassName
-											: nonSelectedClassName
-									}
-									onClickCapture={(e) => {
-										e.preventDefault();
-										setPage(i + 1);
-									}}
-								>
-									{i + 1}
-								</a>
-							</li>
-						))}
+						{invoices?.meta?.totalPages &&
+							[
+								...Array(
+									Math.min(10, invoices?.meta?.totalPages)
+								).keys(),
+							].map((i) => (
+								<li key={i}>
+									<a
+										href='#'
+										className={
+											i + 1 === page
+												? selectedClassName
+												: nonSelectedClassName
+										}
+										onClickCapture={(e) => {
+											e.preventDefault();
+											setPage(i + 1);
+										}}
+									>
+										{i + 1}
+									</a>
+								</li>
+							))}
 
 						{invoices?.meta?.totalPages - 10 > 2 && (
 							<li>

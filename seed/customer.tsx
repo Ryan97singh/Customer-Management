@@ -27,9 +27,9 @@ export function fakeInvoice() {
 export function fakeInvoiceComplete(customerId: string) {
 	return {
 		id: faker.string.uuid(),
-		amount: faker.number.float(),
+		amount: faker.number.int({ min: 100, max: 1000 }),
 		customerId,
-		createdAt: new Date(),
+		createdAt: faker.date.between({ from: "2024-01-01", to: Date.now() }),
 		updatedAt: faker.date.anytime(),
 	};
 }
